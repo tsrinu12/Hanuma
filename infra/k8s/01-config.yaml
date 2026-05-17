@@ -1,0 +1,41 @@
+# Replace placeholders before applying.
+# Production: use AWS Secrets Manager + External Secrets Operator instead of plain Secret.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: distrebute-config
+  namespace: distrebute
+data:
+  AWS_REGION: "us-east-1"
+  S3_BUCKET_RAW: "distribute-raw-uploads"
+  S3_BUCKET_HLS: "distribute-hls-public"
+  S3_ENDPOINT_URL: ""               # blank => real S3
+  CLOUDFRONT_DOMAIN: "cdn.distrebute.com"
+  POSTGRES_HOST: "REPLACE_WITH_RDS_HOST.us-east-1.rds.amazonaws.com"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "distribute"
+  POSTGRES_USER: "distribute"
+  REDIS_URL: "redis://distrebute-redis:6379/0"
+  QDRANT_URL: "http://distrebute-qdrant:6333"
+  METADATA_URL: "http://metadata-service:8000"
+  VIDEO_URL: "http://video-service:8000"
+  AI_URL: "http://ai-service:8000"
+  SEARCH_URL: "http://search-service:8000"
+  WHISPER_MODEL: "base"
+  EMBEDDING_MODEL: "sentence-transformers/all-MiniLM-L6-v2"
+  SUMMARY_MODEL: "facebook/bart-large-cnn"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: distrebute-secrets
+  namespace: distrebute
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: "REPLACE_ME"
+  DATABASE_URL: "postgresql+psycopg2://distribute:REPLACE_ME@REPLACE_WITH_RDS_HOST:5432/distribute"
+  OPENAI_API_KEY: ""
+  # When using IRSA (recommended), leave these blank and assume an IAM role via service account.
+  S3_ACCESS_KEY: ""
+  S3_SECRET_KEY: ""

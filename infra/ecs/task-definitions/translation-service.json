@@ -1,0 +1,38 @@
+{
+  "family": "distrebute-translation-service",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["EC2"],
+  "_comment_compat": "NLLB-200-3.3B needs GPU; use ECS-EC2 with a g5.xlarge or larger.",
+  "cpu": "4096",
+  "memory": "24576",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::${AWS_ACCOUNT_ID}:role/distrebute-ai-task",
+  "containerDefinitions": [
+    {
+      "name": "translation-service",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/distrebute/translation-service:${TAG}",
+      "essential": true,
+      "resourceRequirements": [{"type": "GPU", "value": "1"}],
+      "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+      "environment": [
+        {"name": "NLLB_MODEL", "value": "facebook/nllb-200-3.3B"},
+        {"name": "LANG_ID_MODEL", "value": "facebook/fasttext-language-identification"},
+        {"name": "TRANSLATE_BATCH_SIZE", "value": "8"},
+        {"name": "DEVICE", "value": "cuda"}
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"],
+        "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 300
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/distrebute/translation-service",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

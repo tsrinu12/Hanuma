@@ -1,0 +1,37 @@
+{
+  "family": "distrebute-video-service",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "2048",
+  "memory": "4096",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::${AWS_ACCOUNT_ID}:role/distrebute-video-task",
+  "containerDefinitions": [
+    {
+      "name": "video-service",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/distrebute/video-service:${TAG}",
+      "essential": true,
+      "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+      "environment": [
+        {"name": "AWS_REGION", "value": "${AWS_REGION}"},
+        {"name": "S3_BUCKET_RAW", "value": "distribute-raw-uploads"},
+        {"name": "S3_BUCKET_HLS", "value": "distribute-hls-public"},
+        {"name": "METADATA_URL", "value": "http://metadata-service.distrebute.local:8000"},
+        {"name": "REDIS_URL", "value": "redis://distrebute-redis.distrebute.local:6379/0"}
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/healthz || exit 1"],
+        "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 30
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/distrebute/video-service",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

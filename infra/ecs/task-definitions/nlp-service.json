@@ -1,0 +1,39 @@
+{
+  "family": "distrebute-nlp-service",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["EC2"],
+  "cpu": "2048",
+  "memory": "12288",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::${AWS_ACCOUNT_ID}:role/distrebute-ai-task",
+  "containerDefinitions": [
+    {
+      "name": "nlp-service",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/distrebute/nlp-service:${TAG}",
+      "essential": true,
+      "resourceRequirements": [{"type": "GPU", "value": "1"}],
+      "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+      "environment": [
+        {"name": "SENTIMENT_MODEL", "value": "cardiffnlp/twitter-roberta-base-sentiment-latest"},
+        {"name": "NER_MODEL", "value": "dslim/bert-large-NER"},
+        {"name": "EMOTION_MODEL", "value": "j-hartmann/emotion-english-distilroberta-base"},
+        {"name": "EMBEDDING_MODEL", "value": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"},
+        {"name": "SUMMARY_MODEL", "value": "facebook/bart-large-cnn"},
+        {"name": "DEVICE", "value": "cuda"}
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"],
+        "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 180
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/distrebute/nlp-service",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

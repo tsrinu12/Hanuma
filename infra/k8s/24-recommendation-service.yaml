@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendation-service
+  namespace: distrebute
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: recommendation-service}}
+  template:
+    metadata: {labels: {app: recommendation-service}}
+    spec:
+      containers:
+        - name: app
+          image: ${ECR_REGISTRY}/distrebute/recommendation-service:${TAG}
+          envFrom:
+            - configMapRef: {name: distrebute-config}
+            - secretRef:    {name: distrebute-secrets}
+          ports: [{containerPort: 8000}]
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8000}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests: {cpu: "150m", memory: "512Mi"}
+            limits:   {cpu: "1",    memory: "1Gi"}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recommendation-service
+  namespace: distrebute
+spec:
+  selector: {app: recommendation-service}
+  ports: [{port: 8000, targetPort: 8000}]
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: recommendation-train
+  namespace: distrebute
+spec:
+  schedule: "0 3 * * *"   # nightly 03:00 UTC
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: trainer
+              image: curlimages/curl:8.10.1
+              command: ["sh", "-c", "curl -fsS -X POST http://recommendation-service:8000/train"]

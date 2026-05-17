@@ -1,0 +1,63 @@
+{
+  "realm": "distribute",
+  "enabled": true,
+  "registrationAllowed": true,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "loginWithEmailAllowed": true,
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      { "name": "user", "description": "Regular viewer" },
+      { "name": "creator", "description": "Can upload videos" },
+      { "name": "admin", "description": "Platform admin" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "distribute-web",
+      "name": "Distribute Web App",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "https://app.distrebute.com/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "https://app.distrebute.com"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": ["profile", "email", "roles"]
+    },
+    {
+      "clientId": "distribute-backend",
+      "name": "Distribute Backend Service",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "REPLACE_IN_SECRETS_MANAGER",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false
+    }
+  ],
+  "defaultRoles": ["user"],
+  "users": [
+    {
+      "username": "demo",
+      "email": "demo@distrebute.com",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "demo123", "temporary": false }
+      ],
+      "realmRoles": ["user", "creator"]
+    }
+  ]
+}

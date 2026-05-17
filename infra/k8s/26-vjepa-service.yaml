@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vjepa-service
+  namespace: distrebute
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: vjepa-service}}
+  template:
+    metadata: {labels: {app: vjepa-service}}
+    spec:
+      # Schedule on GPU node group. Remove the tolerations + nodeSelector +
+      # nvidia.com/gpu request to fall back to CPU (only feasible with a
+      # smaller V-JEPA variant).
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: app
+          image: ${ECR_REGISTRY}/distrebute/vjepa-service:${TAG}
+          envFrom:
+            - configMapRef: {name: distrebute-config}
+            - secretRef:    {name: distrebute-secrets}
+          ports: [{containerPort: 8000}]
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 180
+            periodSeconds: 30
+          resources:
+            requests: {cpu: "1", memory: "8Gi", nvidia.com/gpu: 1}
+            limits:   {cpu: "4", memory: "16Gi", nvidia.com/gpu: 1}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vjepa-service
+  namespace: distrebute
+spec:
+  selector: {app: vjepa-service}
+  ports: [{port: 8000, targetPort: 8000}]

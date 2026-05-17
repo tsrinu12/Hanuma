@@ -1,0 +1,41 @@
+{
+  "family": "distrebute-vjepa-service",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["EC2"],
+  "_comment_compat": "GPU workloads run on ECS-EC2 (Fargate has no GPU support). Use a g5.xlarge / g6.xlarge capacity provider.",
+  "cpu": "4096",
+  "memory": "16384",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::${AWS_ACCOUNT_ID}:role/distrebute-ai-task",
+  "containerDefinitions": [
+    {
+      "name": "vjepa-service",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/distrebute/vjepa-service:${TAG}",
+      "essential": true,
+      "resourceRequirements": [{"type": "GPU", "value": "1"}],
+      "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+      "environment": [
+        {"name": "AWS_REGION", "value": "${AWS_REGION}"},
+        {"name": "S3_BUCKET_RAW", "value": "distribute-raw-uploads"},
+        {"name": "VJEPA_MODEL", "value": "facebook/vjepa2-vitl-fpc64-256"},
+        {"name": "VJEPA_CLASSIFIER_MODEL", "value": "facebook/vjepa2-vitl-fpc64-256-ssv2"},
+        {"name": "QDRANT_URL", "value": "http://distrebute-qdrant.distrebute.local:6333"},
+        {"name": "METADATA_URL", "value": "http://metadata-service.distrebute.local:8000"},
+        {"name": "DEVICE", "value": "cuda"}
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"],
+        "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 240
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/distrebute/vjepa-service",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

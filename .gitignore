@@ -1,0 +1,59 @@
+# --- Secrets / environment ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+*.log
+
+# --- Node / frontend ---
+node_modules/
+dist/
+.vite/
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- AI model caches ---
+.cache/
+.huggingface/
+.cache/huggingface/
+models/
+*.bin
+*.pt
+*.onnx
+*.safetensors
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Docker / local data ---
+*.pid
+.docker/
+
+# --- Build artifacts ---
+build/
+out/
+coverage/
+.nyc_output/

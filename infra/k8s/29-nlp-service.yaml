@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nlp-service
+  namespace: distrebute
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: nlp-service}}
+  template:
+    metadata: {labels: {app: nlp-service}}
+    spec:
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: app
+          image: ${ECR_REGISTRY}/distrebute/nlp-service:${TAG}
+          envFrom:
+            - configMapRef: {name: distrebute-config}
+            - secretRef:    {name: distrebute-secrets}
+          ports: [{containerPort: 8000}]
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 120
+            periodSeconds: 20
+          resources:
+            requests: {cpu: "500m", memory: "6Gi",  nvidia.com/gpu: 1}
+            limits:   {cpu: "2",    memory: "12Gi", nvidia.com/gpu: 1}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nlp-service
+  namespace: distrebute
+spec:
+  selector: {app: nlp-service}
+  ports: [{port: 8000, targetPort: 8000}]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nlp-service
+  namespace: distrebute
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: nlp-service}
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource: {name: cpu, target: {type: Utilization, averageUtilization: 70}}

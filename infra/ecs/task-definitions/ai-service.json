@@ -1,0 +1,41 @@
+{
+  "family": "distrebute-ai-service",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "4096",
+  "memory": "16384",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::${AWS_ACCOUNT_ID}:role/distrebute-ai-task",
+  "containerDefinitions": [
+    {
+      "name": "ai-service",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/distrebute/ai-service:${TAG}",
+      "essential": true,
+      "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+      "environment": [
+        {"name": "AWS_REGION", "value": "${AWS_REGION}"},
+        {"name": "S3_BUCKET_RAW", "value": "distribute-raw-uploads"},
+        {"name": "WHISPER_MODEL", "value": "base"},
+        {"name": "METADATA_URL", "value": "http://metadata-service.distrebute.local:8000"},
+        {"name": "SEARCH_URL", "value": "http://search-service.distrebute.local:8000"},
+        {"name": "REDIS_URL", "value": "redis://distrebute-redis.distrebute.local:6379/0"}
+      ],
+      "secrets": [
+        {"name": "OPENAI_API_KEY", "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:distrebute/openai-api-key"}
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/healthz || exit 1"],
+        "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 120
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/distrebute/ai-service",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

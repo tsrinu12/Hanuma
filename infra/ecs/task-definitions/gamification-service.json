@@ -1,0 +1,44 @@
+{
+  "family": "distrebute-gamification-service",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::${AWS_ACCOUNT_ID}:role/distrebute-metadata-task",
+  "containerDefinitions": [
+    {
+      "name": "gamification-service",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/distrebute/gamification-service:${TAG}",
+      "essential": true,
+      "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+      "environment": [
+        {"name": "REDIS_URL", "value": "redis://distrebute-redis.distrebute.local:6379/0"},
+        {"name": "POINTS_VIEW", "value": "1"},
+        {"name": "POINTS_COMPLETE", "value": "5"},
+        {"name": "POINTS_LIKE", "value": "2"},
+        {"name": "POINTS_COMMENT", "value": "2"},
+        {"name": "POINTS_SHARE", "value": "3"},
+        {"name": "POINTS_UPLOAD", "value": "10"},
+        {"name": "POINTS_FIRST_VIEW_OF_DAY", "value": "10"},
+        {"name": "POINTS_STREAK_BONUS", "value": "2"}
+      ],
+      "secrets": [
+        {"name": "DATABASE_URL", "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:distrebute/database-url"}
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"],
+        "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 30
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/distrebute/gamification-service",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

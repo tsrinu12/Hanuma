@@ -1,0 +1,53 @@
+# AWS Load Balancer Controller ingress.
+# Requires aws-load-balancer-controller installed in the cluster.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: distrebute-ingress
+  namespace: distrebute
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:<acct>:certificate/<id>
+spec:
+  rules:
+    - host: app.distrebute.com
+      http:
+        paths:
+          - path: /metadata
+            pathType: Prefix
+            backend: {service: {name: metadata-service, port: {number: 8000}}}
+          - path: /video
+            pathType: Prefix
+            backend: {service: {name: video-service, port: {number: 8000}}}
+          - path: /ai
+            pathType: Prefix
+            backend: {service: {name: ai-service, port: {number: 8000}}}
+          - path: /search
+            pathType: Prefix
+            backend: {service: {name: search-service, port: {number: 8000}}}
+          - path: /recommend
+            pathType: Prefix
+            backend: {service: {name: recommendation-service, port: {number: 8000}}}
+          - path: /vjepa
+            pathType: Prefix
+            backend: {service: {name: vjepa-service, port: {number: 8000}}}
+          - path: /translate
+            pathType: Prefix
+            backend: {service: {name: translation-service, port: {number: 8000}}}
+          - path: /spam
+            pathType: Prefix
+            backend: {service: {name: spam-service, port: {number: 8000}}}
+          - path: /nlp
+            pathType: Prefix
+            backend: {service: {name: nlp-service, port: {number: 8000}}}
+          - path: /points
+            pathType: Prefix
+            backend: {service: {name: gamification-service, port: {number: 8000}}}
+          - path: /
+            pathType: Prefix
+            backend: {service: {name: frontend, port: {number: 80}}}

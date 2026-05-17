@@ -1,0 +1,38 @@
+{
+  "family": "distrebute-spam-service",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["EC2"],
+  "cpu": "2048",
+  "memory": "8192",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::${AWS_ACCOUNT_ID}:role/distrebute-ai-task",
+  "containerDefinitions": [
+    {
+      "name": "spam-service",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/distrebute/spam-service:${TAG}",
+      "essential": true,
+      "resourceRequirements": [{"type": "GPU", "value": "1"}],
+      "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+      "environment": [
+        {"name": "TOXIC_MODEL", "value": "unitary/toxic-bert"},
+        {"name": "HATE_MODEL", "value": "Hate-speech-CNERG/dehatebert-mono-english"},
+        {"name": "ZEROSHOT_MODEL", "value": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"},
+        {"name": "REDIS_URL", "value": "redis://distrebute-redis.distrebute.local:6379/0"},
+        {"name": "DEVICE", "value": "cuda"}
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"],
+        "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 120
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/distrebute/spam-service",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

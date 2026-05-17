@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: distrebute-redis
+  namespace: distrebute
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: distrebute-redis}}
+  template:
+    metadata: {labels: {app: distrebute-redis}}
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports: [{containerPort: 6379}]
+          resources:
+            requests: {cpu: "100m", memory: "128Mi"}
+            limits:   {cpu: "500m", memory: "512Mi"}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: distrebute-redis
+  namespace: distrebute
+spec:
+  selector: {app: distrebute-redis}
+  ports: [{port: 6379, targetPort: 6379}]
