@@ -75,3 +75,7 @@ scripts/*.e2e.log
 scripts/e2e_report.json
 # Docker volumes
 docker-volumes/
+
+# Pytest cache (already excluded via .pytest_cache, but the test runner
+# also sometimes drops pytest-cache-files-* dirs)
+pytest-cache-files-*/
