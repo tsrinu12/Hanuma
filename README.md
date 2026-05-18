@@ -147,3 +147,40 @@ Provision an ACM certificate and uncomment the `certificate-arn` annotation in
 - **Recommendation training**: nightly CronJob (`infra/k8s/24-...`) calls `POST /train`. On ECS, schedule with EventBridge → ECS RunTask.
 - **Scaling**: HPA on `ai-service` (CPU 65%). ECS Fargate uses Application Auto Scaling on the same target.
 - **Live streaming** (PRD §Scalability): for live, swap the upload path for an AWS MediaLive ingest → MediaPackage origin and pipe the audio to an additional Whisper streaming worker. The frontend already plays HLS, so the viewer path is unchanged.
+
+---
+
+## distrebute-ml — four new ML/DL services (this branch)
+
+The `feat/distrebute-ml-services` branch adds four self-contained FastAPI
+services targeting structural weaknesses in major video platforms. They sit
+alongside the existing platform services, do not modify them, and use a
+host-port range (8011-8014) that doesn't collide with the existing
+8001-8010 assignments.
+
+| Service | Host port | Algorithm |
+| --- | --- | --- |
+| [`services/cold_start_bandit`](services/cold_start_bandit/) | 8011 | LinUCB contextual bandit + V-JEPA peer-cluster routing + MMR diversity rerank |
+| [`services/semantic_search`](services/semantic_search/) | 8012 | TransNetV2 shot detection + chapter assembly + ColBERT-style late-interaction retrieval |
+| [`services/moderation`](services/moderation/) | 8013 | Cross-modal ensemble (toxic-bert + CLIP + PANNs) with weighted noisy-OR fusion |
+| [`services/live_moderation`](services/live_moderation/) | 8014 | faster-whisper + VAD chunking + per-chunk toxicity over WebSocket |
+
+Each service has its own `README.md`, Dockerfile, `requirements.txt`, and
+pytest suite. End-to-end harness at [`scripts/distrebute-ml/e2e.py`](scripts/distrebute-ml/e2e.py).
+
+CI: [`.github/workflows/ci-distrebute-ml.yml`](.github/workflows/ci-distrebute-ml.yml)
+runs unit tests, e2e, Docker builds, and compose-config validation on every
+push.
+
+Quick start:
+
+```bash
+make install
+make test        # 76 unit tests across all four services
+make e2e         # 22 e2e checks against live HTTP/WebSocket
+MODEL_PROFILE=lite docker compose up cold_start_bandit semantic_search moderation live_moderation
+```
+
+These services are independent of the existing recommendation-service,
+search-service, etc. — they ship together and can be wired into your
+gateway when you're ready.
