@@ -1,0 +1,12 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+pydantic-settings==2.5.2
+numpy==1.26.4
+httpx==0.27.2
+pytest==8.3.3
+websockets==13.1
+# Prod-only:
+# faster-whisper==1.0.3
+# transformers==4.45.1
+# torch==2.4.1

@@ -57,3 +57,21 @@ build/
 out/
 coverage/
 .nyc_output/
+# Python
+*$py.class
+*.so
+.coverage
+htmlcov/
+# Virtual envs
+ENV/
+# Editors / OS
+# Local secrets
+.env.*
+!.env.example
+# Model weights and caches (when MODEL_PROFILE=prod)
+hf_cache/
+# e2e harness artifacts
+scripts/*.e2e.log
+scripts/e2e_report.json
+# Docker volumes
+docker-volumes/
